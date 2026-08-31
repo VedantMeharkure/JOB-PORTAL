@@ -44,36 +44,34 @@ function PostJob() {
         return;
     }
     setLoading(true);
-
     try {
-
-        await api.post("/jobs", {
-
-            ...formData,
-
+        const payload = {
+        title: formData.title.trim(),
+            description: formData.description.trim(),
+            company: formData.company.trim(),
+            location: formData.location.trim(),
+            employmentType: formData.employmentType,
             salary: formData.salary
                 ? Number(formData.salary)
                 : undefined,
-
             skills: [
-    ...new Set(
-        formData.skills
-            .split(",")
-            .map((skill) => skill.trim())
-            .filter(Boolean)
-    )
-]
-        });
-
+                ...new Set(
+                    formData.skills
+                        .split(",")
+                        .map((skill) => skill.trim())
+                        .filter(Boolean)
+                )
+            ],
+            experience: formData.experience.trim(),
+            deadline: formData.deadline
+        };
+        await api.post("/jobs",payload);
         navigate("/recruiter/dashboard");
-
     } catch (error) {
-
         setError(
             error.response?.data?.message ||
             "Failed to create job"
         );
-
     } finally {
 
         setLoading(false);

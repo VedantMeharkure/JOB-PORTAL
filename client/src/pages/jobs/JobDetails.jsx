@@ -109,13 +109,6 @@ function JobDetails() {
         try {
             setSubmitting(true);
             setApplicationMessage("");
-            if (!user?.resume) {
-                setApplicationMessage(
-                    "Please upload your resume before applying."
-                );
-                navigate("/student/profile");
-                return;
-            }
             const response = await api.post(
                 "/applications",
                 {
