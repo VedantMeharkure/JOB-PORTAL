@@ -1,8 +1,16 @@
 import { useNavigate } from "react-router-dom";
+import "./JobCard.css";
 
 function JobCard({ job }) {
-
     const navigate = useNavigate();
+
+    const isExpired =
+        job.deadline &&
+        new Date(job.deadline) < new Date();
+
+    const deadlineText = job.deadline
+        ? new Date(job.deadline).toLocaleDateString()
+        : "Not specified";
 
     return (
         <article className="job-card">
@@ -10,18 +18,24 @@ function JobCard({ job }) {
             <div className="job-card-header">
 
                 <div>
-                    <p className="job-company">
+                    <span className="job-card-type">
+                        {job.employmentType || "Job"}
+                    </span>
+
+                    <h3>
+                        {job.title}
+                    </h3>
+
+                    <p className="job-card-company">
                         {job.company}
                     </p>
-
-                    <h2>
-                        {job.title}
-                    </h2>
                 </div>
 
-                <span className="job-type-badge">
-                    {job.employmentType}
-                </span>
+                {isExpired && (
+                    <span className="job-expired">
+                        Expired
+                    </span>
+                )}
 
             </div>
 
@@ -29,46 +43,72 @@ function JobCard({ job }) {
             <div className="job-card-meta">
 
                 <span>
-                    📍 {job.location}
+                    📍 {job.location || "Remote"}
                 </span>
 
-                {job.experience && (
-                    <span>
-                        🧑‍💻 {job.experience}
-                    </span>
-                )}
+                <span>
+                    💰 {job.salary || "Salary not specified"}
+                </span>
 
-                {job.salary && (
-                    <span>
-                        💰 {job.salary}
-                    </span>
-                )}
+                <span>
+                    🎓 {job.experience || "Fresher"}
+                </span>
 
             </div>
 
 
-            <div className="skills-list">
+            {job.skills?.length > 0 && (
 
-                {job.skills?.map((skill) => (
-                    <span
-                        className="skill-badge"
-                        key={skill}
-                    >
-                        {skill}
-                    </span>
-                ))}
+                <div className="job-card-skills">
+
+                    {job.skills.slice(0, 5).map(
+                        (skill, index) => (
+                            <span key={index}>
+                                {skill}
+                            </span>
+                        )
+                    )}
+
+                    {job.skills.length > 5 && (
+                        <span>
+                            +{job.skills.length - 5}
+                        </span>
+                    )}
+
+                </div>
+
+            )}
+
+
+            <div className="job-card-footer">
+
+                <div className="job-deadline">
+
+                    <small>
+                        Application Deadline
+                    </small>
+
+                    <strong className={
+                        isExpired
+                            ? "expired-text"
+                            : ""
+                    }>
+                        {deadlineText}
+                    </strong>
+
+                </div>
+
+
+                <button
+                    className="job-view-button"
+                    onClick={() =>
+                        navigate(`/jobs/${job._id}`)
+                    }
+                >
+                    View Details
+                </button>
 
             </div>
-
-
-            <button
-                className="primary-button"
-                onClick={() =>
-                    navigate(`/jobs/${job._id}`)
-                }
-            >
-                View Details
-            </button>
 
         </article>
     );

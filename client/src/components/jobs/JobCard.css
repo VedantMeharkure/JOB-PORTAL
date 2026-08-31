@@ -1,0 +1,147 @@
+.job-card {
+    background: #ffffff;
+    border: 1px solid #e5e7eb;
+    border-radius: 16px;
+    padding: 24px;
+    margin-bottom: 16px;
+    box-shadow: 0 6px 20px rgba(15, 23, 42, 0.04);
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.job-card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 12px 30px rgba(15, 23, 42, 0.08);
+}
+
+.job-card-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    gap: 20px;
+}
+
+.job-card-type {
+    display: inline-block;
+    padding: 5px 10px;
+    border-radius: 999px;
+    background: #eef2ff;
+    color: #4f46e5;
+    font-size: 12px;
+    font-weight: 700;
+}
+
+.job-card h3 {
+    margin: 10px 0 5px;
+    color: #111827;
+    font-size: 21px;
+}
+
+.job-card-company {
+    margin: 0;
+    color: #64748b;
+    font-weight: 600;
+}
+
+.job-expired {
+    padding: 6px 10px;
+    border-radius: 999px;
+    background: #fee2e2;
+    color: #dc2626;
+    font-size: 12px;
+    font-weight: 700;
+    white-space: nowrap;
+}
+
+.job-card-meta {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 18px;
+    margin: 22px 0;
+    color: #475569;
+    font-size: 14px;
+}
+
+.job-card-skills {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    margin-bottom: 22px;
+}
+
+.job-card-skills span {
+    padding: 6px 10px;
+    border-radius: 7px;
+    background: #f1f5f9;
+    color: #334155;
+    font-size: 13px;
+    font-weight: 600;
+}
+
+.job-card-footer {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 20px;
+    padding-top: 18px;
+    border-top: 1px solid #eef0f4;
+}
+
+.job-deadline {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
+
+.job-deadline small {
+    color: #94a3b8;
+    font-size: 12px;
+}
+
+.job-deadline strong {
+    color: #334155;
+    font-size: 14px;
+}
+
+.expired-text {
+    color: #dc2626 !important;
+}
+
+.job-view-button {
+    border: none;
+    border-radius: 9px;
+    padding: 11px 18px;
+    background: #4f46e5;
+    color: white;
+    font-weight: 700;
+    cursor: pointer;
+    white-space: nowrap;
+}
+
+.job-view-button:hover {
+    background: #4338ca;
+}
+
+@media (max-width: 600px) {
+    .job-card {
+        padding: 18px;
+    }
+
+    .job-card-header {
+        flex-direction: column;
+        gap: 10px;
+    }
+
+    .job-card-meta {
+        flex-direction: column;
+        gap: 9px;
+    }
+
+    .job-card-footer {
+        align-items: stretch;
+        flex-direction: column;
+    }
+
+    .job-view-button {
+        width: 100%;
+    }
+}

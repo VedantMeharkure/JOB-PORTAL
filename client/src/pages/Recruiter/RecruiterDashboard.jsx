@@ -1,5 +1,6 @@
 import { useContext, useEffect, useState } from "react";
 import { Navigate, useNavigate } from "react-router-dom";
+
 import { AuthContext } from "../../context/AuthContext";
 import api from "../../services/api";
 import "./RecruiterDashboard.css";
@@ -34,10 +35,11 @@ function RecruiterDashboard() {
                     )
                 );
 
-                const allApplications = applicationResponses.flatMap(
-                    (response) =>
-                        response.data.applications || []
-                );
+                const allApplications =
+                    applicationResponses.flatMap(
+                        (response) =>
+                            response.data.applications || []
+                    );
 
                 setApplications(allApplications);
             } catch (error) {
@@ -110,6 +112,8 @@ function RecruiterDashboard() {
     const now = new Date();
 
     const activeJobs = jobs.filter((job) => {
+        if (!job.deadline) return true;
+
         const deadline = new Date(job.deadline);
         deadline.setHours(23, 59, 59, 999);
 
@@ -122,6 +126,7 @@ function RecruiterDashboard() {
         <div className="recruiter-dashboard">
 
             <section className="dashboard-header">
+
                 <div>
                     <p className="dashboard-label">
                         Recruiter Portal
@@ -144,6 +149,7 @@ function RecruiterDashboard() {
                 >
                     + Create New Job
                 </button>
+
             </section>
 
             {error && (
@@ -155,29 +161,41 @@ function RecruiterDashboard() {
             <section className="dashboard-stats">
 
                 <div className="stat-card">
-                    <div className="stat-icon">💼</div>
+                    <div className="stat-icon">
+                        💼
+                    </div>
 
                     <div>
                         <span>Total Jobs</span>
-                        <strong>{jobs.length}</strong>
+                        <strong>
+                            {jobs.length}
+                        </strong>
                     </div>
                 </div>
 
                 <div className="stat-card">
-                    <div className="stat-icon">📋</div>
+                    <div className="stat-icon">
+                        📋
+                    </div>
 
                     <div>
                         <span>Active Postings</span>
-                        <strong>{activeJobs.length}</strong>
+                        <strong>
+                            {activeJobs.length}
+                        </strong>
                     </div>
                 </div>
 
                 <div className="stat-card">
-                    <div className="stat-icon">👥</div>
+                    <div className="stat-icon">
+                        👥
+                    </div>
 
                     <div>
                         <span>Applications</span>
-                        <strong>{totalApplications}</strong>
+                        <strong>
+                            {totalApplications}
+                        </strong>
                     </div>
                 </div>
 
@@ -186,16 +204,21 @@ function RecruiterDashboard() {
             <section className="jobs-section">
 
                 <div className="section-heading">
+
                     <div>
-                        <h2>My Job Postings</h2>
+                        <h2>
+                            My Job Postings
+                        </h2>
 
                         <p>
                             Jobs you have posted on the platform.
                         </p>
                     </div>
+
                 </div>
 
                 {jobs.length === 0 ? (
+
                     <div className="empty-state">
 
                         <div className="empty-icon">
@@ -220,10 +243,13 @@ function RecruiterDashboard() {
                         </button>
 
                     </div>
+
                 ) : (
+
                     <div className="jobs-grid">
 
                         {jobs.map((job) => {
+
                             const jobApplications =
                                 applications.filter(
                                     (application) =>
@@ -233,17 +259,21 @@ function RecruiterDashboard() {
                                             job._id
                                 );
 
-                            const deadline =
-                                new Date(job.deadline);
+                            const deadline = job.deadline
+                                ? new Date(job.deadline)
+                                : null;
 
-                            deadline.setHours(
-                                23,
-                                59,
-                                59,
-                                999
-                            );
+                            if (deadline) {
+                                deadline.setHours(
+                                    23,
+                                    59,
+                                    59,
+                                    999
+                                );
+                            }
 
                             const isActive =
+                                !deadline ||
                                 deadline >= new Date();
 
                             return (
@@ -255,6 +285,7 @@ function RecruiterDashboard() {
                                     <div className="job-card-top">
 
                                         <div>
+
                                             <span className="job-type">
                                                 {job.employmentType}
                                             </span>
@@ -266,6 +297,7 @@ function RecruiterDashboard() {
                                             <p className="company">
                                                 {job.company}
                                             </p>
+
                                         </div>
 
                                         <div className="job-menu">
@@ -293,6 +325,13 @@ function RecruiterDashboard() {
                                                 "Fresher"}
                                         </span>
 
+                                        <span>
+                                            📅{" "}
+                                            {deadline
+                                                ? deadline.toLocaleDateString()
+                                                : "No deadline"}
+                                        </span>
+
                                     </div>
 
                                     <div className="job-skills">
@@ -313,7 +352,13 @@ function RecruiterDashboard() {
 
                                     <div className="job-footer">
 
-                                        <span>
+                                        <span
+                                            className={
+                                                isActive
+                                                    ? "job-status active"
+                                                    : "job-status closed"
+                                            }
+                                        >
                                             {isActive
                                                 ? "🟢 Active"
                                                 : "🔴 Closed"}
@@ -321,9 +366,7 @@ function RecruiterDashboard() {
 
                                         <span>
                                             👥{" "}
-                                            {
-                                                jobApplications.length
-                                            }{" "}
+                                            {jobApplications.length}{" "}
                                             applications
                                         </span>
 
@@ -371,6 +414,7 @@ function RecruiterDashboard() {
                         })}
 
                     </div>
+
                 )}
 
             </section>

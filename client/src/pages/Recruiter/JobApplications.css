@@ -323,3 +323,59 @@
         padding: 18px;
     }
 }
+.applicant-skills {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+}
+
+.applicant-skills span {
+    padding: 6px 10px;
+    border-radius: 7px;
+    background: #eef2ff;
+    color: #4f46e5;
+    font-size: 12px;
+    font-weight: 700;
+}
+
+.existing-interview {
+    margin-top: 20px;
+    padding: 20px;
+    border: 1px solid #bbf7d0;
+    border-radius: 12px;
+    background: #f0fdf4;
+}
+
+.existing-interview h3 {
+    margin: 0 0 15px;
+    color: #166534;
+    font-size: 17px;
+}
+
+.existing-interview-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 15px;
+}
+
+.existing-interview-grid div {
+    display: flex;
+    flex-direction: column;
+    gap: 5px;
+}
+
+.existing-interview-grid span {
+    color: #64748b;
+    font-size: 12px;
+    font-weight: 600;
+}
+
+.existing-interview-grid strong {
+    color: #166534;
+}
+
+@media (max-width: 700px) {
+    .existing-interview-grid {
+        grid-template-columns: 1fr;
+    }
+}

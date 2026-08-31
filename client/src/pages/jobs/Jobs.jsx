@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-
+import "./Jobs.css";
 import JobCard from "../../components/jobs/JobCard";
 import Loading from "../../components/common/Loading";
 import ErrorMessage from "../../components/common/ErrorMessage";
