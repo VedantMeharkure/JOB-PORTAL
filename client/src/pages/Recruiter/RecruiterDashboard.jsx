@@ -9,6 +9,7 @@ function RecruiterDashboard() {
     const navigate = useNavigate();
 
     const [jobs, setJobs] = useState([]);
+    const [applications, setApplications] = useState([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState("");
 
@@ -18,26 +19,40 @@ function RecruiterDashboard() {
             return;
         }
 
-        const fetchMyJobs = async () => {
+        const fetchDashboardData = async () => {
             try {
                 setError("");
 
-                const response = await api.get("/jobs/my");
+                const jobsResponse = await api.get("/jobs/my");
+                const myJobs = jobsResponse.data.jobs || [];
 
-                setJobs(response.data.jobs || []);
+                setJobs(myJobs);
+
+                const applicationResponses = await Promise.all(
+                    myJobs.map((job) =>
+                        api.get(`/applications/job/${job._id}`)
+                    )
+                );
+
+                const allApplications = applicationResponses.flatMap(
+                    (response) =>
+                        response.data.applications || []
+                );
+
+                setApplications(allApplications);
             } catch (error) {
                 console.error(error);
 
                 setError(
                     error.response?.data?.message ||
-                    "Failed to load your jobs"
+                    "Failed to load dashboard"
                 );
             } finally {
                 setLoading(false);
             }
         };
 
-        fetchMyJobs();
+        fetchDashboardData();
     }, [user]);
 
     const handleDeleteJob = async (jobId) => {
@@ -53,7 +68,17 @@ function RecruiterDashboard() {
             await api.delete(`/jobs/${jobId}`);
 
             setJobs((previousJobs) =>
-                previousJobs.filter((job) => job._id !== jobId)
+                previousJobs.filter(
+                    (job) => job._id !== jobId
+                )
+            );
+
+            setApplications((previousApplications) =>
+                previousApplications.filter(
+                    (application) =>
+                        application.job?._id !== jobId &&
+                        application.job !== jobId
+                )
             );
         } catch (error) {
             console.error(error);
@@ -82,8 +107,20 @@ function RecruiterDashboard() {
         return <Navigate to="/unauthorized" replace />;
     }
 
+    const now = new Date();
+
+    const activeJobs = jobs.filter((job) => {
+        const deadline = new Date(job.deadline);
+        deadline.setHours(23, 59, 59, 999);
+
+        return deadline >= now;
+    });
+
+    const totalApplications = applications.length;
+
     return (
         <div className="recruiter-dashboard">
+
             <section className="dashboard-header">
                 <div>
                     <p className="dashboard-label">
@@ -109,7 +146,14 @@ function RecruiterDashboard() {
                 </button>
             </section>
 
+            {error && (
+                <div className="dashboard-error">
+                    {error}
+                </div>
+            )}
+
             <section className="dashboard-stats">
+
                 <div className="stat-card">
                     <div className="stat-icon">💼</div>
 
@@ -124,7 +168,7 @@ function RecruiterDashboard() {
 
                     <div>
                         <span>Active Postings</span>
-                        <strong>{jobs.length}</strong>
+                        <strong>{activeJobs.length}</strong>
                     </div>
                 </div>
 
@@ -133,18 +177,14 @@ function RecruiterDashboard() {
 
                     <div>
                         <span>Applications</span>
-                        <strong>—</strong>
+                        <strong>{totalApplications}</strong>
                     </div>
                 </div>
+
             </section>
 
-            {error && (
-                <div className="dashboard-error">
-                    {error}
-                </div>
-            )}
-
             <section className="jobs-section">
+
                 <div className="section-heading">
                     <div>
                         <h2>My Job Postings</h2>
@@ -157,9 +197,14 @@ function RecruiterDashboard() {
 
                 {jobs.length === 0 ? (
                     <div className="empty-state">
-                        <div className="empty-icon">💼</div>
 
-                        <h3>No jobs posted yet</h3>
+                        <div className="empty-icon">
+                            💼
+                        </div>
+
+                        <h3>
+                            No jobs posted yet
+                        </h3>
 
                         <p>
                             Create your first job posting and
@@ -173,98 +218,163 @@ function RecruiterDashboard() {
                         >
                             Create Your First Job
                         </button>
+
                     </div>
                 ) : (
                     <div className="jobs-grid">
-                        {jobs.map((job) => (
-                            <article
-                                className="job-card"
-                                key={job._id}
-                            >
-                                <div className="job-card-top">
-                                    <div>
-                                        <span className="job-type">
-                                            {job.employmentType}
+
+                        {jobs.map((job) => {
+                            const jobApplications =
+                                applications.filter(
+                                    (application) =>
+                                        application.job?._id ===
+                                            job._id ||
+                                        application.job ===
+                                            job._id
+                                );
+
+                            const deadline =
+                                new Date(job.deadline);
+
+                            deadline.setHours(
+                                23,
+                                59,
+                                59,
+                                999
+                            );
+
+                            const isActive =
+                                deadline >= new Date();
+
+                            return (
+                                <article
+                                    className="job-card"
+                                    key={job._id}
+                                >
+
+                                    <div className="job-card-top">
+
+                                        <div>
+                                            <span className="job-type">
+                                                {job.employmentType}
+                                            </span>
+
+                                            <h3>
+                                                {job.title}
+                                            </h3>
+
+                                            <p className="company">
+                                                {job.company}
+                                            </p>
+                                        </div>
+
+                                        <div className="job-menu">
+                                            ⋮
+                                        </div>
+
+                                    </div>
+
+                                    <div className="job-details">
+
+                                        <span>
+                                            📍 {job.location}
                                         </span>
 
-                                        <h3>{job.title}</h3>
+                                        <span>
+                                            💰{" "}
+                                            {job.salary
+                                                ? `₹${job.salary}`
+                                                : "Not specified"}
+                                        </span>
 
-                                        <p className="company">
-                                            {job.company}
-                                        </p>
+                                        <span>
+                                            🎓{" "}
+                                            {job.experience ||
+                                                "Fresher"}
+                                        </span>
+
                                     </div>
 
-                                    <div className="job-menu">
-                                        ⋮
+                                    <div className="job-skills">
+
+                                        {job.skills
+                                            ?.slice(0, 4)
+                                            .map(
+                                                (skill, index) => (
+                                                    <span
+                                                        key={index}
+                                                    >
+                                                        {skill}
+                                                    </span>
+                                                )
+                                            )}
+
                                     </div>
-                                </div>
 
-                                <div className="job-details">
-                                    <span>
-                                        📍 {job.location}
-                                    </span>
+                                    <div className="job-footer">
 
-                                    <span>
-                                        💰{" "}
-                                        {job.salary
-                                            ? `₹${job.salary}`
-                                            : "Not specified"}
-                                    </span>
+                                        <span>
+                                            {isActive
+                                                ? "🟢 Active"
+                                                : "🔴 Closed"}
+                                        </span>
 
-                                    <span>
-                                        🎓{" "}
-                                        {job.experience ||
-                                            "Fresher"}
-                                    </span>
-                                </div>
+                                        <span>
+                                            👥{" "}
+                                            {
+                                                jobApplications.length
+                                            }{" "}
+                                            applications
+                                        </span>
 
-                                <div className="job-skills">
-                                    {job.skills
-                                        ?.slice(0, 4)
-                                        .map((skill, index) => (
-                                            <span key={index}>
-                                                {skill}
-                                            </span>
-                                        ))}
-                                </div>
+                                    </div>
 
-                                <div className="job-footer">
-                                    <button
-                                        className="secondary-btn"
-                                        onClick={() =>
-                                            navigate(
-                                                `/recruiter/jobs/edit/${job._id}`
-                                            )
-                                        }
-                                    >
-                                        Edit
-                                    </button>
+                                    <div className="job-footer">
 
-                                    <button
-                                        className="application-btn"
-                                        onClick={() =>
-                                            navigate(
-                                                `/recruiter/jobs/${job._id}/applications`
-                                            )
-                                        }
-                                    >
-                                        Applications
-                                    </button>
+                                        <button
+                                            className="secondary-btn"
+                                            onClick={() =>
+                                                navigate(
+                                                    `/recruiter/jobs/edit/${job._id}`
+                                                )
+                                            }
+                                        >
+                                            Edit
+                                        </button>
 
-                                    <button
-                                        className="delete-btn"
-                                        onClick={() =>
-                                            handleDeleteJob(job._id)
-                                        }
-                                    >
-                                        Delete
-                                    </button>
-                                </div>
-                            </article>
-                        ))}
+                                        <button
+                                            className="application-btn"
+                                            onClick={() =>
+                                                navigate(
+                                                    `/recruiter/jobs/${job._id}/applications`
+                                                )
+                                            }
+                                        >
+                                            Applications
+                                        </button>
+
+                                        <button
+                                            className="delete-btn"
+                                            onClick={() =>
+                                                handleDeleteJob(
+                                                    job._id
+                                                )
+                                            }
+                                        >
+                                            Delete
+                                        </button>
+
+                                    </div>
+
+                                </article>
+                            );
+                        })}
+
                     </div>
                 )}
+
             </section>
+
         </div>
     );
 }

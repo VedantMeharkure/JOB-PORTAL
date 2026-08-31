@@ -18,12 +18,17 @@ const updateProfileSchema = z.object({
         .or(z.literal("")),
 
     skills: z
-        .array(
-            z.string()
-                .trim()
-                .min(1, "Skill cannot be empty")
-        )
-        .optional(),
+    .array(
+        z.string()
+            .trim()
+            .min(1, "Skill cannot be empty")
+            .max(50, "Skill name is too long")
+    )
+    .max(
+        20,
+        "Maximum 20 skills are allowed"
+    )
+    .optional(),
 
     education: z
         .string()

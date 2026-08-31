@@ -5,15 +5,18 @@ import api from "../../services/api";
 
 function Register() {
     const navigate = useNavigate();
+
     const [formData, setFormData] = useState({
         name: "",
         email: "",
-        password: ""
+        password: "",
+        role: "student"
     });
+
     const [error, setError] = useState("");
     const [loading, setLoading] = useState(false);
-    const handleChange = (event) => {
 
+    const handleChange = (event) => {
         const { name, value } = event.target;
 
         setFormData((previous) => ({
@@ -21,15 +24,15 @@ function Register() {
             [name]: value
         }));
     };
+
     const handleSubmit = async (event) => {
         event.preventDefault();
+
         setError("");
         setLoading(true);
+
         try {
-            await api.post(
-                "/auth/register",
-                formData
-            );
+            await api.post("/auth/register", formData);
             navigate("/login");
         } catch (error) {
             setError(
@@ -40,19 +43,26 @@ function Register() {
             setLoading(false);
         }
     };
+
     return (
         <div className="auth-page">
             <div className="auth-card">
+
                 <h1>Create Account</h1>
+
                 <p className="auth-subtitle">
                     Create your Job Portal account
                 </p>
+
                 <ErrorMessage message={error} />
+
                 <form onSubmit={handleSubmit}>
+
                     <div className="form-group">
                         <label>
                             Name
                         </label>
+
                         <input
                             type="text"
                             name="name"
@@ -62,10 +72,12 @@ function Register() {
                             required
                         />
                     </div>
+
                     <div className="form-group">
                         <label>
                             Email
                         </label>
+
                         <input
                             type="email"
                             name="email"
@@ -75,10 +87,12 @@ function Register() {
                             required
                         />
                     </div>
+
                     <div className="form-group">
                         <label>
                             Password
                         </label>
+
                         <input
                             type="password"
                             name="password"
@@ -88,6 +102,28 @@ function Register() {
                             required
                         />
                     </div>
+
+                    <div className="form-group">
+                        <label>
+                            Account Type
+                        </label>
+
+                        <select
+                            name="role"
+                            value={formData.role}
+                            onChange={handleChange}
+                            required
+                        >
+                            <option value="student">
+                                Student
+                            </option>
+
+                            <option value="recruiter">
+                                Recruiter
+                            </option>
+                        </select>
+                    </div>
+
                     <button
                         type="submit"
                         className="primary-button"
@@ -97,9 +133,12 @@ function Register() {
                             ? "Creating Account..."
                             : "Register"}
                     </button>
+
                 </form>
+
                 <p className="auth-footer">
                     Already have an account?{" "}
+
                     <button
                         type="button"
                         className="text-button"
@@ -110,6 +149,7 @@ function Register() {
                         Login
                     </button>
                 </p>
+
             </div>
         </div>
     );

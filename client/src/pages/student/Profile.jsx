@@ -9,8 +9,11 @@ import api from "../../services/api";
 
 function Profile() {
 
-    const { user, loading: authLoading } =
-        useContext(AuthContext);
+    const {
+            user,
+            loading: authLoading,
+            getCurrentUser
+        } = useContext(AuthContext);
 
     const [formData, setFormData] = useState({
         name: "",
@@ -171,21 +174,35 @@ function Profile() {
 
         setError("");
         setMessage("");
+        const skills = [
+            ...new Set(
+                formData.skills
+                    .split(",")
+                    .map((skill) => skill.trim())
+                    .filter(Boolean)
+            )
+        ];
+
+        if (skills.length > 20) {
+            setError("Maximum 20 skills are allowed");
+            return;
+        }
+        
         setSaving(true);
-
         try {
-
             const response = await api.put(
                 "/users/me",
                 {
                     name: formData.name,
                     phone: formData.phone,
-                    resume: formData.resume,
-
-                    skills: formData.skills
-                        .split(",")
-                        .map((skill) => skill.trim())
-                        .filter(Boolean),
+                    skills: [
+                        ...new Set(
+                            formData.skills
+                                .split(",")
+                                .map((skill) => skill.trim())
+                                .filter(Boolean)
+                        )
+                    ],
 
                     education: formData.education
                 }

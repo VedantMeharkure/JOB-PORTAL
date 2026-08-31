@@ -11,13 +11,10 @@ const errorMiddleware = require("./middlewares/error.middleware");
 
 const app = express();
 
-app.use(
-    cors({
-        origin: "http://localhost:5173",
-        credentials: true
-    })
-);
-
+cors({
+    origin: process.env.CLIENT_URL,
+    credentials: true
+})
 app.use(express.json());
 app.use(cookieParser());
 
@@ -31,7 +28,6 @@ app.use((req, res) => {
         message: "Route not found"
     });
 });
-
 app.use(errorMiddleware);
 
 module.exports = app;

@@ -1,6 +1,14 @@
 const User = require("../models/user");
 const cloudinary = require("../config/cloudinary");
+function isPdfFile(buffer) {
+    if (!buffer || buffer.length < 5) {
+        return false;
+    }
 
+    return buffer
+        .subarray(0, 5)
+        .toString("ascii") === "%PDF-";
+}
 async function getMyProfile(req, res) {
 
     const user = await User
@@ -17,8 +25,6 @@ async function getMyProfile(req, res) {
         user
     });
 }
-
-
 async function updateMyProfile(req, res) {
 
     const {
@@ -73,7 +79,11 @@ async function uploadResume(req, res) {
             message: "Please upload a PDF resume"
         });
     }
-
+if (!isPdfFile(req.file.buffer)) {
+    return res.status(400).json({
+        message: "The uploaded file is not a valid PDF"
+    });
+}
     const user = await User.findById(req.user.id);
 
     if (!user) {

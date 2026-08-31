@@ -30,7 +30,7 @@ function MyApplications() {
                 setLoading(true);
                 setError("");
 
-                const response = await api.get("/application/my");
+                const response = await api.get("/applications/my");
 
                 setApplications(
                     response.data.applications || []
@@ -125,77 +125,112 @@ function MyApplications() {
                                         {" · "}
                                         {application.job?.employmentType}
                                     </p>
+
+                                    {application.job?.deadline && (
+                                        <p>
+                                            Apply before{" "}
+                                            {new Date(
+                                                application.job.deadline
+                                            ).toLocaleDateString()}
+                                        </p>
+                                    )}
                                 </div>
                             </div>
+                            <button
+                                className="secondary-button"
+                                onClick={() =>
+                                    application.job?._id &&
+                                    navigate(`/jobs/${application.job._id}`)
+                                }
+                                disabled={!application.job?._id}
+                            >
+                                View Job
+                            </button>
 
                             <ApplicationStatus
                                 status={application.status}
                             />
+                            <p className="application-status-message">
+                            {application.status === "Applied" &&
+                                "Your application has been submitted and is waiting for review."}
 
-                            {application.interview?.date && (
-                                <div className="student-interview-card">
-                                    <div className="student-interview-header">
-                                        <h3>
-                                            Interview Details
-                                        </h3>
+                            {application.status === "Shortlisted" &&
+                                "Congratulations! The recruiter has shortlisted your application."}
 
-                                        <span className="status-badge status-interview">
-                                            Interview
-                                        </span>
-                                    </div>
+                            {application.status === "Interview" &&
+                                "Your interview has been scheduled. Check the details below."}
 
-                                    <div className="interview-details-grid">
-                                        <div>
-                                            <span>Date</span>
+                            {application.status === "Selected" &&
+                                "Congratulations! You have been selected."}
 
-                                            <strong>
-                                                {new Date(
-                                                    application.interview.date
-                                                ).toLocaleDateString()}
-                                            </strong>
-                                        </div>
+                            {application.status === "Rejected" &&
+                                "This application was not selected for the next stage."}
+                        </p>
 
-                                        <div>
-                                            <span>Time</span>
+                            {application.status === "Interview" &&
+                                application.interview?.date && (
+                                    <div className="interview-details">
 
-                                            <strong>
-                                                {application.interview.time}
-                                            </strong>
-                                        </div>
+                                        <h3>Interview Details</h3>
 
-                                        <div>
-                                            <span>Type</span>
+                                        <p>
+                                            <strong>Date:</strong>{" "}
+                                            {new Date(
+                                                application.interview.date
+                                            ).toLocaleDateString()}
+                                        </p>
 
-                                            <strong>
-                                                {application.interview.type}
-                                            </strong>
-                                        </div>
-                                    </div>
+                                        <p>
+                                            <strong>Time:</strong>{" "}
+                                            {application.interview.time}
+                                        </p>
 
-                                    {application.interview.meetingLink && (
-                                        <a
-                                            className="primary-button"
-                                            href={application.interview.meetingLink}
-                                            target="_blank"
-                                            rel="noreferrer"
-                                        >
-                                            Join Interview
-                                        </a>
-                                    )}
+                                        <p>
+                                            <strong>Type:</strong>{" "}
+                                            {application.interview.type}
+                                        </p>
 
-                                    {application.interview.notes && (
-                                        <div className="interview-notes">
-                                            <strong>
-                                                Notes
-                                            </strong>
+                                        {application.interview.meetingLink && (
+                                            <a
+                                                href={application.interview.meetingLink}
+                                                target="_blank"
+                                                rel="noreferrer"
+                                                className="primary-button"
+                                            >
+                                                Join Interview
+                                            </a>
+                                        )}
 
+                                        {application.interview.notes && (
                                             <p>
+                                                <strong>Notes:</strong>{" "}
                                                 {application.interview.notes}
                                             </p>
-                                        </div>
-                                    )}
-                                </div>
-                            )}
+                                        )}
+
+                                    </div>
+                                )}
+                                {application.status === "Selected" && (
+                                    <p>
+                                        Congratulations! You have been selected for this position.
+                                    </p>
+                                )}
+
+                                {application.status === "Rejected" && (
+                                    <p>
+                                        This application was not selected for the next stage.
+                                    </p>
+                                )}{application.status === "Applied" && (
+                                    <p>
+                                        Your application is waiting for recruiter review.
+                                    </p>
+                                )}
+
+                                {application.status === "Shortlisted" && (
+                                    <p>
+                                        Your application has been shortlisted.
+                                    </p>
+                                )}
 
                             <div className="application-footer">
                                 <span>

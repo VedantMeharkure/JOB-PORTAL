@@ -8,7 +8,6 @@ import EmptyState from "../../components/common/EmptyState";
 import { getJobs } from "../../services/jobService";
 
 function Jobs() {
-
     const [jobs, setJobs] = useState([]);
 
     const [search, setSearch] = useState("");
@@ -23,71 +22,74 @@ function Jobs() {
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState("");
 
-
-    const fetchJobs = async (pageNumber = page) => {
-
+    const fetchJobs = async (
+        pageNumber = page,
+        filters = {
+            search,
+            location,
+            employmentType,
+            skills
+        }
+    ) => {
         try {
-
             setLoading(true);
             setError("");
 
             const data = await getJobs({
-                search,
-                location,
-                employmentType,
-                skills,
+                ...filters,
                 page: pageNumber,
                 limit: 10
             });
 
-            setJobs(data.jobs);
-            setTotalPages(data.totalPages);
-            setTotalJobs(data.totalJobs);
-
+            setJobs(data.jobs || []);
+            setTotalPages(data.totalPages || 1);
+            setTotalJobs(data.totalJobs || 0);
         } catch (error) {
-
             console.error(error);
 
             setError(
                 error.response?.data?.message ||
                 "Failed to load jobs"
             );
-
         } finally {
-
             setLoading(false);
         }
     };
 
-
     useEffect(() => {
-
         fetchJobs(page);
-
     }, [page]);
 
-
     const handleSearch = (event) => {
-
         event.preventDefault();
 
+        const filters = {
+            search,
+            location,
+            employmentType,
+            skills
+        };
+
         setPage(1);
-        fetchJobs(1);
+        fetchJobs(1, filters);
     };
 
-
     const clearFilters = () => {
+        const emptyFilters = {
+            search: "",
+            location: "",
+            employmentType: "",
+            skills: ""
+        };
 
         setSearch("");
         setLocation("");
         setEmploymentType("");
         setSkills("");
-
         setPage(1);
 
-        fetchJobs(1);
+        fetchJobs(1, emptyFilters);
     };
-
 
     return (
         <div className="jobs-page">
@@ -113,7 +115,6 @@ function Jobs() {
 
             </div>
 
-
             <form
                 className="job-filters"
                 onSubmit={handleSearch}
@@ -138,7 +139,6 @@ function Jobs() {
 
                     </div>
 
-
                     <div className="form-group">
 
                         <label>
@@ -155,7 +155,6 @@ function Jobs() {
                         />
 
                     </div>
-
 
                     <div className="form-group">
 
@@ -192,7 +191,6 @@ function Jobs() {
 
                     </div>
 
-
                     <div className="form-group">
 
                         <label>
@@ -212,7 +210,6 @@ function Jobs() {
 
                 </div>
 
-
                 <div className="filter-actions">
 
                     <button type="submit">
@@ -231,9 +228,7 @@ function Jobs() {
 
             </form>
 
-
             <ErrorMessage message={error} />
-
 
             {loading ? (
 
@@ -254,7 +249,6 @@ function Jobs() {
                         </span>
 
                     </div>
-
 
                     {jobs.length === 0 ? (
 
@@ -279,7 +273,6 @@ function Jobs() {
                         </div>
 
                     )}
-
 
                     {totalPages > 1 && (
 

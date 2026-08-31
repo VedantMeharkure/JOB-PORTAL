@@ -33,6 +33,16 @@ function PostJob() {
     event.preventDefault();
     setError("");
     setMessage("");
+    const deadline = new Date(formData.deadline);
+    const today = new Date();
+
+    today.setHours(0, 0, 0, 0);
+    deadline.setHours(0, 0, 0, 0);
+
+    if (deadline < today) {
+        setError("Deadline must be today or in the future");
+        return;
+    }
     setLoading(true);
 
     try {
@@ -45,10 +55,14 @@ function PostJob() {
                 ? Number(formData.salary)
                 : undefined,
 
-            skills: formData.skills
-                .split(",")
-                .map((skill) => skill.trim())
-                .filter(Boolean)
+            skills: [
+    ...new Set(
+        formData.skills
+            .split(",")
+            .map((skill) => skill.trim())
+            .filter(Boolean)
+    )
+]
         });
 
         navigate("/recruiter/dashboard");
@@ -147,6 +161,7 @@ function PostJob() {
                     name="deadline"
                     value={formData.deadline}
                     onChange={handleChange}
+                    min={new Date().toISOString().split("T")[0]}
                     required
                 />
                 <button

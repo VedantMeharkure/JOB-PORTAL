@@ -71,10 +71,14 @@ function EditJob() {
                 salary: formData.salary
                     ? Number(formData.salary)
                     : undefined,
-                skills: formData.skills
-                    .split(",")
-                    .map((skill) => skill.trim())
-                    .filter(Boolean)
+                skills: [
+    ...new Set(
+        formData.skills
+            .split(",")
+            .map((skill) => skill.trim())
+            .filter(Boolean)
+    )
+]
             });
             navigate("/recruiter/dashboard");
         } catch (error) {
@@ -188,12 +192,13 @@ function EditJob() {
                 <div>
                     <label>Deadline</label>
                     <input
-                        type="date"
-                        name="deadline"
-                        value={formData.deadline}
-                        onChange={handleChange}
-                        required
-                    />
+                    type="date"
+                    name="deadline"
+                    value={formData.deadline}
+                    onChange={handleChange}
+                    min={new Date().toISOString().split("T")[0]}
+                    required
+                />
                 </div>
                 <button type="submit" disabled={saving}>
                     {saving ? "Saving..." : "Update Job"}

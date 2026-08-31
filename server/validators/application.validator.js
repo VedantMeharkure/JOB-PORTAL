@@ -9,8 +9,10 @@ const applyToJobSchema = z.object({
         ),
 
     resume: z
-        .string()
-        .min(1, "Resume is required"),
+    .string()
+    .trim()
+    .url("Resume must be a valid URL")
+    .min(1, "Resume is required"),
 
     coverLetter: z
         .string()
@@ -53,12 +55,47 @@ const scheduleInterviewSchema = z.object({
 
     notes: z
         .string()
+        .trim()
         .max(
             2000,
             "Interview notes are too long"
         )
         .optional()
         .or(z.literal(""))
+}).superRefine((data, ctx) => {
+    const interviewDateTime = new Date(
+        `${data.date}T${data.time}`
+    );
+
+    if (Number.isNaN(interviewDateTime.getTime())) {
+        ctx.addIssue({
+            code: z.ZodIssueCode.custom,
+            message: "Invalid interview date or time",
+            path: ["date"]
+        });
+
+        return;
+    }
+
+    if (interviewDateTime <= new Date()) {
+        ctx.addIssue({
+            code: z.ZodIssueCode.custom,
+            message: "Interview must be scheduled in the future",
+            path: ["date"]
+        });
+    }
+
+    if (
+        data.type === "Online" &&
+        !data.meetingLink
+    ) {
+        ctx.addIssue({
+            code: z.ZodIssueCode.custom,
+            message:
+                "Meeting link is required for online interviews",
+            path: ["meetingLink"]
+        });
+    }
 });
 module.exports = {
     applyToJobSchema,

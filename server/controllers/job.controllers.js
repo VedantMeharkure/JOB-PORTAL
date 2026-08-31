@@ -1,6 +1,12 @@
 const Job = require("../models/job");
 const mongoose = require("mongoose");
-
+const Application = require("../models/application");
+function escapeRegex(value) {
+    return value.replace(
+        /[.*+?^${}()|[\]\\]/g,
+        "\\$&"
+    );
+}
 async function getMyJobs(req, res) {
 
     const jobs = await Job.find({
@@ -61,41 +67,50 @@ async function getAllJobs(req, res) {
         limit = 10
     } = req.query;
 
-    const query = {};
+    const today = new Date();
+today.setHours(0, 0, 0, 0);
+
+const query = {
+    deadline: {
+        $gte: today
+    }
+};
 
 
-    if (search) {
+    if (search?.trim()) {
+    const safeSearch = escapeRegex(
+        search.trim()
+    );
 
-        query.$or = [
-            {
-                title: {
-                    $regex: search,
-                    $options: "i"
-                }
-            },
-            {
-                company: {
-                    $regex: search,
-                    $options: "i"
-                }
-            },
-            {
-                description: {
-                    $regex: search,
-                    $options: "i"
-                }
+    query.$or = [
+        {
+            title: {
+                $regex: safeSearch,
+                $options: "i"
             }
-        ];
-    }
+        },
+        {
+            company: {
+                $regex: safeSearch,
+                $options: "i"
+            }
+        },
+        {
+            description: {
+                $regex: safeSearch,
+                $options: "i"
+            }
+        }
+    ];
+}
 
 
-    if (location) {
-
-        query.location = {
-            $regex: location,
-            $options: "i"
-        };
-    }
+    if (location?.trim()) {
+    query.location = {
+        $regex: escapeRegex(location.trim()),
+        $options: "i"
+    };
+}
 
 
     if (employmentType) {
@@ -104,20 +119,24 @@ async function getAllJobs(req, res) {
     }
 
 
-    if (skills) {
+    if (skills?.trim()) {
+    const skillArray = skills
+        .split(",")
+        .map((skill) => skill.trim())
+        .filter(Boolean)
+        .map((skill) => escapeRegex(skill));
 
-        const skillArray = skills
-            .split(",")
-            .map((skill) => skill.trim())
-            .filter(Boolean);
-
-        if (skillArray.length > 0) {
-
-            query.skills = {
-                $in: skillArray
-            };
-        }
+    if (skillArray.length > 0) {
+        query.skills = {
+            $in: skillArray.map(
+                (skill) => new RegExp(
+                    `^${skill}$`,
+                    "i"
+                )
+            )
+        };
     }
+}
 
 
     const parsedPage = parseInt(page);
@@ -311,14 +330,24 @@ async function deleteJob(req, res) {
 
 
     if (job.recruiter.toString() !== req.user.id) {
-
         return res.status(403).json({
             message: "You can only delete your own job"
         });
     }
 
+            const applicationCount =
+                await Application.countDocuments({
+                    job: id
+                });
 
-    await Job.findByIdAndDelete(id);
+            if (applicationCount > 0) {
+                return res.status(409).json({
+                    message:
+                        "This job cannot be deleted because it has applications"
+                });
+            }
+
+        await Job.findByIdAndDelete(id);
 
 
     return res.status(200).json({

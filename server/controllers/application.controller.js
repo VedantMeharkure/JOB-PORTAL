@@ -1,6 +1,9 @@
+const mongoose = require("mongoose");
 const Application = require("../models/application");
 const Job = require("../models/job");
-
+function isValidObjectId(id) {
+    return mongoose.Types.ObjectId.isValid(id);
+}
 async function applyToJob(req, res) {
 
     const {
@@ -72,8 +75,13 @@ async function getMyApplication(req, res) {
 
 
 async function getJobApplications(req, res) {
-
     const { jobId } = req.params;
+
+    if (!isValidObjectId(jobId)) {
+        return res.status(400).json({
+            message: "Invalid Job ID"
+        });
+    }
 
     const job = await Job.findById(jobId);
 
@@ -85,8 +93,7 @@ async function getJobApplications(req, res) {
 
     if (job.recruiter.toString() !== req.user.id) {
         return res.status(403).json({
-            message:
-                "You can only view applications for your own jobs"
+            message: "You can only view applications for your own jobs"
         });
     }
 
@@ -111,26 +118,37 @@ async function getJobApplications(req, res) {
         applications
     });
 }
-
+const allowedTransitions = {
+    Applied: ["Shortlisted", "Rejected"],
+    Shortlisted: ["Interview", "Rejected"],
+    Interview: ["Selected", "Rejected"],
+    Selected: [],
+    Rejected: []
+};
 
 async function updateApplicationStatus(req, res) {
-
     const { id } = req.params;
     const { status } = req.body;
 
-    const allowedStatuses = [
-        "Applied",
-        "Shortlisted",
-        "Interview",
-        "Selected",
-        "Rejected"
-    ];
-
-    if (!allowedStatuses.includes(status)) {
+    if (!isValidObjectId(id)) {
         return res.status(400).json({
-            message: "Invalid application status"
+            message: "Invalid Application ID"
         });
     }
+
+    const allowedStatuses = [
+    "Applied",
+    "Shortlisted",
+    "Interview",
+    "Selected",
+    "Rejected"
+];
+
+if (!allowedStatuses.includes(status)) {
+    return res.status(400).json({
+        message: "Invalid application status"
+    });
+}
 
     const application =
         await Application.findById(id);
@@ -140,7 +158,15 @@ async function updateApplicationStatus(req, res) {
             message: "Application not found"
         });
     }
+    const allowedNextStatuses =
+        allowedTransitions[application.status] || [];
 
+    if (!allowedNextStatuses.includes(status)) {
+        return res.status(400).json({
+            message:
+                `Cannot change application status from ${application.status} to ${status}`
+        });
+    }
     const job =
         await Job.findById(application.job);
 
@@ -149,12 +175,10 @@ async function updateApplicationStatus(req, res) {
             message: "Associated job not found"
         });
     }
-    
 
     if (job.recruiter.toString() !== req.user.id) {
         return res.status(403).json({
-            message:
-                "You can only update applications for your own jobs"
+            message: "You can only update applications for your own jobs"
         });
     }
 
@@ -163,17 +187,13 @@ async function updateApplicationStatus(req, res) {
     await application.save();
 
     return res.status(200).json({
-        message:
-            "Application status updated successfully",
+        message: "Application status updated successfully",
         application
     });
 }
 
-
 async function scheduleInterview(req, res) {
-
     const { id } = req.params;
-
     const {
         date,
         time,
@@ -181,6 +201,12 @@ async function scheduleInterview(req, res) {
         meetingLink,
         notes
     } = req.body;
+
+    if (!isValidObjectId(id)) {
+        return res.status(400).json({
+            message: "Invalid Application ID"
+        });
+    }
 
     const application =
         await Application.findById(id);
@@ -202,8 +228,12 @@ async function scheduleInterview(req, res) {
 
     if (job.recruiter.toString() !== req.user.id) {
         return res.status(403).json({
-            message:
-                "You can only schedule interviews for your own jobs"
+            message: "You can only schedule interviews for your own jobs"
+        });
+    }
+    if (application.status !== "Shortlisted") {
+        return res.status(400).json({
+            message: "Interview can only be scheduled for shortlisted applications"
         });
     }
 
@@ -224,7 +254,6 @@ async function scheduleInterview(req, res) {
         application
     });
 }
-
 
 module.exports = {
     applyToJob,

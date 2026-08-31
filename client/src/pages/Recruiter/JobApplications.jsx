@@ -9,7 +9,13 @@ import EmptyState from "../../components/common/EmptyState";
 import api from "../../services/api";
 
 function JobApplications() {
-
+    const allowedTransitions = {
+        Applied: ["Shortlisted", "Rejected"],
+        Shortlisted: ["Interview", "Rejected"],
+        Interview: ["Selected", "Rejected"],
+        Selected: [],
+        Rejected: []
+    };
     const { jobId } = useParams();
     const navigate = useNavigate();
 
@@ -36,7 +42,7 @@ function JobApplications() {
             setError("");
 
             const response = await api.get(
-                `/application/job/${jobId}`
+                `/applications/job/${jobId}`
             );
 
             setApplications(
@@ -76,11 +82,11 @@ function JobApplications() {
             setError("");
 
             const response = await api.patch(
-                `/application/${applicationId}/status`,
-                {
-                    status
-                }
-            );
+            `/applications/${applicationId}/status`,
+            {
+                status
+            }
+        );
 
             setApplications((previousApplications) =>
                 previousApplications.map(
@@ -131,9 +137,21 @@ function JobApplications() {
         try {
 
             setError("");
+            const interviewDateTime = new Date(
+                `${interviewData.date}T${interviewData.time}`
+            );
 
+            if (
+                Number.isNaN(interviewDateTime.getTime()) ||
+                interviewDateTime <= new Date()
+            ) {
+                setError(
+                    "Interview must be scheduled for a future date and time."
+                );
+                return;
+            }
             const response = await api.patch(
-                `/application/${applicationId}/interview`,
+                `/applications/${applicationId}/interview`,
                 interviewData
             );
 
@@ -176,7 +194,13 @@ function JobApplications() {
             />
         );
     }
+const today = new Date();
+const todayString = today.toISOString().split("T")[0];
 
+const minimumTime =
+    interviewData.date === todayString
+        ? today.toTimeString().slice(0, 5)
+        : undefined;
 
     return (
         <div className="applications-page">
@@ -330,27 +354,20 @@ function JobApplications() {
                                         )
                                     }
                                 >
-
-                                    <option value="Applied">
-                                        Applied
+                                    <option value={application.status}>
+                                        {application.status}
                                     </option>
 
-                                    <option value="Shortlisted">
-                                        Shortlisted
-                                    </option>
-
-                                    <option value="Interview">
-                                        Interview
-                                    </option>
-
-                                    <option value="Selected">
-                                        Selected
-                                    </option>
-
-                                    <option value="Rejected">
-                                        Rejected
-                                    </option>
-
+                                    {allowedTransitions[application.status]?.map(
+                                        (status) => (
+                                            <option
+                                                key={status}
+                                                value={status}
+                                            >
+                                                {status}
+                                            </option>
+                                        )
+                                    )}
                                 </select>
 
 
@@ -396,9 +413,8 @@ function JobApplications() {
 
                                         <input
                                             type="date"
-                                            value={
-                                                interviewData.date
-                                            }
+                                            value={interviewData.date}
+                                            min={new Date().toISOString().split("T")[0]}
                                             onChange={(event) =>
                                                 setInterviewData({
                                                     ...interviewData,
@@ -419,9 +435,8 @@ function JobApplications() {
 
                                         <input
                                             type="time"
-                                            value={
-                                                interviewData.time
-                                            }
+                                            value={interviewData.time}
+                                            min={minimumTime}
                                             onChange={(event) =>
                                                 setInterviewData({
                                                     ...interviewData,

@@ -2,24 +2,36 @@ const User=require("../models/user");
 const bcrypt=require("bcryptjs");
 const { generateToken } =require("../utils/auth");
 
-async function registerUser(req,res) {
-    const {name,email,password}=req.body;
-    const existingUser=await User.findOne({email});
-    if(existingUser){
-        return res.status(409).json({
-            message:"User already exists"
+async function registerUser(req, res) {
+    const { name, email, password, role } = req.body;
+
+    if (!["student", "recruiter"].includes(role)) {
+        return res.status(400).json({
+            message: "Invalid role"
         });
     }
-    const hashedPassword=await bcrypt.hash(password,10);
+
+    const existingUser = await User.findOne({ email });
+
+    if (existingUser) {
+        return res.status(409).json({
+            message: "User already exists"
+        });
+    }
+
+    const hashedPassword = await bcrypt.hash(password, 10);
+
     await User.create({
         name,
         email,
-        password :hashedPassword,
-    })  
-    return res.status(201).json({
-        message:"User registered successfully"
+        password: hashedPassword,
+        role
     });
-};
+
+    return res.status(201).json({
+        message: "User registered successfully"
+    });
+}
 async function getCurrentUser(req,res) {
 
     const user = await User

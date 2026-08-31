@@ -56,7 +56,7 @@ function Home() {
                             </Link>
                         )}
 
-                        {user?.role === "recrutier" && (
+                        {user?.role === "recruiter" && (
                             <Link
                                 to="/recruiter/dashboard"
                                 className="secondary-button"

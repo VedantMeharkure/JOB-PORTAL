@@ -19,6 +19,7 @@ function JobDetails() {
     const [coverLetter, setCoverLetter] = useState("");
     const [applicationMessage, setApplicationMessage] = useState("");
     const [submitting, setSubmitting] = useState(false);
+    const [hasApplied, setHasApplied] = useState(false);
 
     const isStudent = user?.role === "student";
 
@@ -50,7 +51,6 @@ function JobDetails() {
         if (!user || user.role !== "student") {
             return;
         }
-
         const fetchProfile = async () => {
             try {
                 const response = await api.get("/users/me");
@@ -60,7 +60,6 @@ function JobDetails() {
                 console.error(error);
             }
         };
-
         fetchProfile();
     }, [user]);
 
@@ -76,8 +75,16 @@ function JobDetails() {
             );
             return;
         }
+        if (hasApplied) {
+    setApplicationMessage(
+        "You have already applied for this job."
+    );
+    return;
+}
+        const deadline = new Date(job.deadline);
+        deadline.setHours(23, 59, 59, 999);
 
-        if (new Date(job.deadline) < new Date()) {
+        if (new Date() > deadline) {
             setApplicationMessage(
                 "The application deadline for this job has passed."
             );
@@ -102,16 +109,22 @@ function JobDetails() {
         try {
             setSubmitting(true);
             setApplicationMessage("");
-
+            if (!user?.resume) {
+                setApplicationMessage(
+                    "Please upload your resume before applying."
+                );
+                navigate("/student/profile");
+                return;
+            }
             const response = await api.post(
                 "/applications",
                 {
                     jobId: id,
-                    resume,
-                    coverLetter
+                    resume: resume.trim(),
+                    coverLetter: coverLetter.trim(),
                 }
             );
-
+            setHasApplied(true);
             setApplicationMessage(
                 response.data.message ||
                 "Application submitted successfully."
@@ -160,7 +173,9 @@ function JobDetails() {
     }
 
     const deadline = new Date(job.deadline);
-    const isExpired = deadline < new Date();
+    deadline.setHours(23, 59, 59, 999);
+
+    const isExpired = new Date() > deadline;
 
     return (
         <div className="job-details-page">
@@ -191,21 +206,28 @@ function JobDetails() {
 
                         {isStudent && (
                             isExpired ? (
-                                <button
-                                    className="apply-btn deadline-btn"
-                                    disabled
-                                >
-                                    Application Closed
-                                </button>
-                            ) : (
-                                <button
-                                    className="apply-btn"
-                                    onClick={handleApply}
-                                >
-                                    Apply Now
-                                </button>
-                            )
-                        )}
+                                    <button
+                                        className="apply-btn deadline-btn"
+                                        disabled
+                                    >
+                                        Application Closed
+                                    </button>
+                                ) : hasApplied ? (
+                                    <button
+                                        className="apply-btn deadline-btn"
+                                        disabled
+                                    >
+                                        Already Applied
+                                    </button>
+                                ) : (
+                                    <button
+                                        className="apply-btn"
+                                        onClick={handleApply}
+                                    >
+                                        Apply Now
+                                    </button>
+                                )
+                            )}
 
                     </div>
 
@@ -344,7 +366,7 @@ function JobDetails() {
                                                             event.target.value
                                                         )
                                                     }
-                                                    placeholder="Enter resume URL"
+                                                    placeholder="https://example.com/resume.pdf"
                                                     required
                                                 />
 
@@ -364,7 +386,7 @@ function JobDetails() {
 
                                         {!resume && !changeResume && (
                                             <p className="resume-warning">
-                                                No resume found. Please enter your resume URL.
+                                                No resume found. Please enter a valid resume URL.
                                             </p>
                                         )}
 

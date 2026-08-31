@@ -23,17 +23,19 @@ function Login() {
         setLoading(true);
 
         try {
+                const data = await login(
+                    email,
+                    password
+                );
 
-            const data = await login(
-                email,
-                password
-            );
-
-            console.log(data);
-
-            navigate("/");
-
-        } catch (error) {
+                if (data.user.role === "student") {
+                    navigate("/student/dashboard");
+                } else if (data.user.role === "recruiter") {
+                    navigate("/recruiter/dashboard");
+                } else {
+                    navigate("/");
+                }
+            } catch (error) {
 
             setError(
                 error.response?.data?.message ||

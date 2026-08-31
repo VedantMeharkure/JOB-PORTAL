@@ -34,9 +34,7 @@ export const AuthProvider = ({ children }) => {
         }
     };
 
-
     const login = async (email, password) => {
-
         const response = await api.post(
             "/auth/login",
             {
@@ -45,15 +43,10 @@ export const AuthProvider = ({ children }) => {
             }
         );
 
-        const userResponse =
-            await api.get("/auth/me");
-
-        setUser(userResponse.data.user);
+        setUser(response.data.user);
 
         return response.data;
     };
-
-
     const logout = async () => {
 
         try {
