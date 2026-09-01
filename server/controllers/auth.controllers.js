@@ -70,7 +70,7 @@ async function loginUser(req,res)
 
     const token = generateToken(user);
 
-    res.cookie("token", token, {
+   res.cookie("token", token, {
     httpOnly: true,
     secure: true,
     sameSite: "none",
@@ -87,7 +87,7 @@ async function loginUser(req,res)
     })
 };
 async function logoutUser(req,res){
-    res.clearCookie("token", {
+   res.clearCookie("token", {
     httpOnly: true,
     secure: true,
     sameSite: "none"
