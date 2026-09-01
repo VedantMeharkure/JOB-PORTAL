@@ -70,12 +70,12 @@ async function loginUser(req,res)
 
     const token = generateToken(user);
 
-    res.cookie("token",token,{
-        httpOnly : true,
-        secure : process.env.NODE_ENV === "production",
-        sameSite : "lax",
-        maxAge : 7*24*60*60*1000
-    });
+    res.cookie("token", token, {
+    httpOnly: true,
+    secure: true,
+    sameSite: "none",
+    maxAge: 7 * 24 * 60 * 60 * 1000
+});
     return res.status(200).json({
         message :"Login successful",
         user :{
@@ -87,11 +87,11 @@ async function loginUser(req,res)
     })
 };
 async function logoutUser(req,res){
-    res.clearCookie("token",{
-        httpOnly:true,
-        secure :process.env.NODE_ENV === "production",
-        sameSite :"lax"
-    });
+    res.clearCookie("token", {
+    httpOnly: true,
+    secure: true,
+    sameSite: "none"
+});
     return res.status(200).json({
         message:"Logout successful"
     })
