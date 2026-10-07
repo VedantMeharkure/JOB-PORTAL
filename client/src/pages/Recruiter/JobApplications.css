@@ -1,3 +1,4 @@
+
 .applications-page {
     min-height: 100vh;
     padding: 48px 20px 60px;
@@ -364,6 +365,32 @@
     transform: translateY(0px);
 }
 
+/* =========================
+   CHAT BUTTON
+   ========================= */
+
+.application-actions .chat-open-button {
+    border: none;
+    padding: 11px 20px;
+    border-radius: var(--radius-sm);
+    background: #059669;
+    color: white;
+    font-weight: 700;
+    cursor: pointer;
+    transition: all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+    box-shadow: 0 4px 12px rgba(5, 150, 105, 0.25);
+}
+
+.application-actions .chat-open-button:hover {
+    background: #047857;
+    transform: translateY(-2px);
+    box-shadow: 0 8px 24px rgba(5, 150, 105, 0.35);
+}
+
+.application-actions .chat-open-button:active {
+    transform: translateY(0);
+}
+
 .application-actions .delete-btn {
     background: var(--danger);
     box-shadow: 0 4px 12px rgba(220, 38, 38, 0.25);
@@ -388,6 +415,7 @@
         opacity: 0;
         transform: translateY(-10px);
     }
+
     to {
         opacity: 1;
         transform: translateY(0);

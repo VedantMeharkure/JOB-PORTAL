@@ -37,7 +37,7 @@ const createJobSchema = z.object({
         "Internship"
     ]),
 
-    salary: z
+    salary: z.coerce
         .number()
         .finite("Salary must be a valid number")
         .nonnegative("Salary cannot be negative")
@@ -74,7 +74,13 @@ const createJobSchema = z.object({
         .refine(
             (date) => {
                 const deadline = new Date(date);
-                deadline.setHours(23, 59, 59, 999);
+
+                deadline.setHours(
+                    23,
+                    59,
+                    59,
+                    999
+                );
 
                 return deadline >= new Date();
             },

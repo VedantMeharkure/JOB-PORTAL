@@ -1,5 +1,5 @@
-const { Router } = require("express");
 
+const { Router } = require("express");
 const {
     createJob,
     getAllJobs,
@@ -8,7 +8,6 @@ const {
     deleteJob,
     getMyJobs
 } = require("../controllers/job.controllers");
-
 const authMiddleware = require("../middlewares/auth.middleware");
 const authorizeRoles = require("../middlewares/role.middleware");
 const validate = require("../middlewares/validate.middleware");
@@ -21,11 +20,13 @@ const {
 
 const router = Router();
 
+// Get all jobs
 router.get(
     "/",
     asyncHandler(getAllJobs)
 );
 
+// Get jobs created by logged-in recruiter
 router.get(
     "/my",
     authMiddleware,
@@ -33,11 +34,13 @@ router.get(
     asyncHandler(getMyJobs)
 );
 
+// Get single job
 router.get(
     "/:id",
     asyncHandler(getJobById)
 );
 
+// Create job
 router.post(
     "/",
     authMiddleware,
@@ -46,6 +49,7 @@ router.post(
     asyncHandler(createJob)
 );
 
+// Update job
 router.patch(
     "/:id",
     authMiddleware,
@@ -54,6 +58,7 @@ router.patch(
     asyncHandler(updateJob)
 );
 
+// Delete job
 router.delete(
     "/:id",
     authMiddleware,

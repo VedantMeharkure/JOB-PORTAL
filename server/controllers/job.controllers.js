@@ -21,39 +21,54 @@ async function getMyJobs(req, res) {
     });
 }
 
-
 async function createJob(req, res) {
+    try {
+        console.log("CREATE JOB REQUEST");
+        console.log("User:", req.user);
+        console.log("Body:", req.body);
 
-    const {
-        title,
-        description,
-        company,
-        location,
-        employmentType,
-        salary,
-        skills,
-        experience,
-        deadline
-    } = req.body;
+        const {
+            title,
+            description,
+            company,
+            location,
+            employmentType,
+            salary,
+            skills,
+            experience,
+            deadline
+        } = req.body;
 
-    const job = await Job.create({
-        title,
-        description,
-        company,
-        location,
-        employmentType,
-        salary,
-        skills,
-        experience,
-        deadline,
-        recruiter: req.user.id
-    });
+        const job = await Job.create({
+            title,
+            description,
+            company,
+            location,
+            employmentType,
+            salary,
+            skills,
+            experience,
+            deadline,
+            recruiter: req.user.id
+        });
 
-    return res.status(201).json({
-        message: "Job created successfully",
-        job
-    });
+        console.log("JOB CREATED:", job._id);
+
+        return res.status(201).json({
+            message: "Job created successfully",
+            job
+        });
+
+    } catch (error) {
+        console.error("CREATE JOB ERROR:", error);
+
+        return res.status(500).json({
+            message: "Failed to create job",
+            error: error.message
+        });
+    }
 }
+
 
 
 async function getAllJobs(req, res) {

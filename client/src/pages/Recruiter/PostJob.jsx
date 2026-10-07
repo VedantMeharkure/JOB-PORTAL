@@ -1,10 +1,7 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
-
 import api from "../../services/api";
-
 function PostJob() {
-
     const navigate = useNavigate();
     const [formData, setFormData] = useState({
         title: "",
@@ -17,8 +14,7 @@ function PostJob() {
         experience: "",
         deadline: ""
     });
-    const [error, setError] = useState("");
-    const [message, setMessage] = useState("");
+   const [errors, setErrors] = useState([]);
     const [loading, setLoading] = useState(false);
 
     const handleChange = (event) => {
@@ -31,8 +27,7 @@ function PostJob() {
 
     const handleSubmit = async (event) => {
     event.preventDefault();
-    setError("");
-    setMessage("");
+    setErrors([]);
     const deadline = new Date(formData.deadline);
     const today = new Date();
 
@@ -40,9 +35,14 @@ function PostJob() {
     deadline.setHours(0, 0, 0, 0);
 
     if (deadline < today) {
-        setError("Deadline must be today or in the future");
-        return;
-    }
+    setErrors([
+        {
+            field: "deadline",
+            message: "Deadline must be today or in the future"
+        }
+    ]);
+    return;
+}
     setLoading(true);
     try {
         const payload = {
@@ -67,12 +67,24 @@ function PostJob() {
         };
         await api.post("/jobs",payload);
         navigate("/recruiter/dashboard");
-    } catch (error) {
-        setError(
-            error.response?.data?.message ||
-            "Failed to create job"
-        );
-    } finally {
+   } catch (error) {
+    console.log("CREATE JOB ERROR:", error.response?.data);
+
+    const backendErrors = error.response?.data?.errors;
+
+    if (backendErrors && Array.isArray(backendErrors)) {
+        setErrors(backendErrors);
+    } else {
+        setErrors([
+            {
+                field: "general",
+                message:
+                    error.response?.data?.message ||
+                    "Failed to create job"
+            }
+        ]);
+    }
+} finally {
 
         setLoading(false);
     }
@@ -80,8 +92,20 @@ function PostJob() {
     return (
         <div>
             <h1>Post a Job</h1>
-            {message && <p>{message}</p>}
-            {error && <p>{error}</p>}
+            {errors.length > 0 && (
+                <div>
+                    {errors.map((error, index) => (
+                        <p key={index}>
+                            <strong>
+                                {error.field !== "general"
+                                    ? `${error.field}: `
+                                    : ""}
+                            </strong>
+                            {error.message}
+                        </p>
+                    ))}
+                </div>
+            )}
             <form onSubmit={handleSubmit}>
                 <input
                     type="text"
@@ -89,6 +113,8 @@ function PostJob() {
                     placeholder="Job title"
                     value={formData.title}
                     onChange={handleChange}
+                    minLength={2}
+                    maxLength={100}
                     required
                 />
                 <textarea
@@ -96,6 +122,8 @@ function PostJob() {
                     placeholder="Job description"
                     value={formData.description}
                     onChange={handleChange}
+                    minLength={10}
+                    maxLength={5000}
                     required
                 />
                 <input
@@ -104,6 +132,8 @@ function PostJob() {
                     placeholder="Company name"
                     value={formData.company}
                     onChange={handleChange}
+                    minLength={2}
+                    maxLength={100}
                     required
                 />
                 <input
@@ -112,6 +142,8 @@ function PostJob() {
                     placeholder="Location"
                     value={formData.location}
                     onChange={handleChange}
+                    minLength={2}
+                    maxLength={100}
                     required
                 />
                 <select

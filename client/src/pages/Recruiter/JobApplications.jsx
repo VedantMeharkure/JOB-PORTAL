@@ -1,75 +1,129 @@
-import { useEffect, useState } from "react";
+import { useContext, useEffect, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import "./JobApplications.css";
-
+import { AuthContext } from "../../context/AuthContext";
 import StatusBadge from "../../components/jobs/StatusBadge";
+import ChatWindow from "../../components/chat/ChatWindow";
 import Loading from "../../components/common/Loading";
 import ErrorMessage from "../../components/common/ErrorMessage";
 import EmptyState from "../../components/common/EmptyState";
-
 import api from "../../services/api";
-
 function JobApplications() {
+
+    const { user } = useContext(AuthContext);
+
     const allowedTransitions = {
-        Applied: ["Shortlisted", "Rejected"],
-        Shortlisted: ["Interview", "Rejected"],
-        Interview: ["Selected", "Rejected"],
+
+        Applied: [
+            "Shortlisted",
+            "Rejected"
+        ],
+
+        Shortlisted: [
+            "Interview",
+            "Rejected"
+        ],
+
+        Interview: [
+            "Selected",
+            "Rejected"
+        ],
+
         Selected: [],
+
         Rejected: []
+
     };
 
     const { jobId } = useParams();
     const navigate = useNavigate();
-
     const [applications, setApplications] = useState([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState("");
-
     const [showInterviewForm, setShowInterviewForm] =
         useState(null);
 
+
     const [interviewData, setInterviewData] = useState({
+
         date: "",
+
         time: "",
+
         type: "Online",
+
         meetingLink: "",
+
         notes: ""
+
     });
 
+
+    /*
+     * Stores the application whose chat
+     * is currently open.
+     *
+     * null = no chat is open.
+     */
+    const [activeChat, setActiveChat] = useState(null);
+
+
     const fetchApplications = async () => {
+
         try {
+
             setLoading(true);
+
             setError("");
+
 
             const response = await api.get(
                 `/applications/job/${jobId}`
             );
 
+
             setApplications(
                 response.data.applications || []
             );
+
         } catch (error) {
+
             console.error(error);
+
 
             setError(
                 error.response?.data?.message ||
                 "Failed to load applications"
             );
+
         } finally {
+
             setLoading(false);
+
         }
+
     };
 
+
     useEffect(() => {
+
         fetchApplications();
+
     }, [jobId]);
 
+
+    /*
+     * Change application status
+     */
     const handleStatusChange = async (
         applicationId,
         status
     ) => {
+
         try {
+
             setError("");
+
 
             const response = await api.patch(
                 `/applications/${applicationId}/status`,
@@ -78,74 +132,122 @@ function JobApplications() {
                 }
             );
 
-            setApplications((previousApplications) =>
-                previousApplications.map(
-                    (application) =>
-                        application._id === applicationId
-                            ? {
-                                  ...application,
-                                  status:
-                                      response.data.application
-                                          .status
-                              }
-                            : application
-                )
+
+            setApplications(
+                (previousApplications) =>
+                    previousApplications.map(
+                        (application) =>
+                            application._id === applicationId
+                                ? {
+                                    ...application,
+
+                                    status:
+                                        response.data.application
+                                            .status
+
+                                }
+                                : application
+                    )
             );
+
         } catch (error) {
+
             console.error(error);
+
 
             setError(
                 error.response?.data?.message ||
                 "Failed to update application status"
             );
+
         }
+
     };
 
+
+    /*
+     * Open interview scheduling form
+     */
     const handleOpenInterviewForm = (application) => {
+
         setShowInterviewForm(application._id);
 
+
         if (application.interview) {
-            const interviewDate = application.interview.date
-                ? new Date(application.interview.date)
-                : null;
+
+            const interviewDate =
+                application.interview.date
+                    ? new Date(
+                        application.interview.date
+                    )
+                    : null;
+
 
             setInterviewData({
+
                 date: interviewDate
-                    ? interviewDate.toISOString().split("T")[0]
+                    ? interviewDate
+                        .toISOString()
+                        .split("T")[0]
                     : "",
-                time: application.interview.time || "",
+
+                time:
+                    application.interview.time || "",
+
                 type:
                     application.interview.type ||
                     "Online",
+
                 meetingLink:
                     application.interview.meetingLink ||
                     "",
+
                 notes:
                     application.interview.notes || ""
+
             });
+
         } else {
+
             setInterviewData({
+
                 date: "",
+
                 time: "",
+
                 type: "Online",
+
                 meetingLink: "",
+
                 notes: ""
+
             });
+
         }
+
     };
 
+
+    /*
+     * Schedule / update interview
+     */
     const handleScheduleInterview = async (
         event,
         applicationId
     ) => {
+
         event.preventDefault();
 
+
         try {
+
             setError("");
+
 
             const interviewDateTime = new Date(
                 `${interviewData.date}T${interviewData.time}`
             );
+
 
             if (
                 Number.isNaN(
@@ -153,81 +255,118 @@ function JobApplications() {
                 ) ||
                 interviewDateTime <= new Date()
             ) {
+
                 setError(
                     "Interview must be scheduled for a future date and time."
                 );
+
                 return;
+
             }
+
 
             const response = await api.patch(
                 `/applications/${applicationId}/interview`,
                 interviewData
             );
 
-            setApplications((previousApplications) =>
-                previousApplications.map(
-                    (application) =>
-                        application._id === applicationId
-                            ? response.data.application
-                            : application
-                )
+
+            setApplications(
+                (previousApplications) =>
+                    previousApplications.map(
+                        (application) =>
+                            application._id === applicationId
+                                ? response.data.application
+                                : application
+                    )
             );
+
 
             setShowInterviewForm(null);
 
+
             setInterviewData({
+
                 date: "",
+
                 time: "",
+
                 type: "Online",
+
                 meetingLink: "",
+
                 notes: ""
+
             });
+
         } catch (error) {
+
             console.error(error);
+
 
             setError(
                 error.response?.data?.message ||
                 "Failed to schedule interview"
             );
+
         }
+
     };
 
+
     if (loading) {
+
         return (
             <Loading
                 message="Loading applications..."
             />
         );
+
     }
 
+
     const today = new Date();
+
     const todayString =
         today.toISOString().split("T")[0];
+
 
     const minimumTime =
         interviewData.date === todayString
             ? today.toTimeString().slice(0, 5)
             : undefined;
 
+
     return (
+
         <div className="applications-page">
+
+
+            {/* =========================================
+                PAGE HEADER
+            ========================================= */}
 
             <div className="page-header">
 
                 <div>
+
                     <p className="dashboard-label">
                         RECRUITER
                     </p>
+
 
                     <h1>
                         Job Applications
                     </h1>
 
+
                     <p>
                         Review candidates and manage
                         their application status.
                     </p>
+
                 </div>
+
 
                 <button
                     className="secondary-button"
@@ -242,17 +381,31 @@ function JobApplications() {
 
             </div>
 
+
             <ErrorMessage message={error} />
 
+
+            {/* =========================================
+                APPLICATION SUMMARY
+            ========================================= */}
+
             <div className="applications-summary">
+
                 <span>
                     Total Applications
                 </span>
 
+
                 <strong>
                     {applications.length}
                 </strong>
+
             </div>
+
+
+            {/* =========================================
+                APPLICATION LIST
+            ========================================= */}
 
             {applications.length === 0 ? (
 
@@ -273,6 +426,11 @@ function JobApplications() {
                                 key={application._id}
                             >
 
+
+                                {/* =================================
+                                    APPLICANT HEADER
+                                ================================= */}
+
                                 <div className="application-header">
 
                                     <div>
@@ -282,21 +440,29 @@ function JobApplications() {
                                                 "Unknown Student"}
                                         </h3>
 
+
                                         <p>
                                             {application.student?.email ||
                                                 "No email available"}
                                         </p>
 
+
                                         {application.createdAt && (
+
                                             <p>
+
                                                 Applied on{" "}
+
                                                 {new Date(
                                                     application.createdAt
                                                 ).toLocaleDateString()}
+
                                             </p>
+
                                         )}
 
                                     </div>
+
 
                                     <StatusBadge
                                         status={
@@ -306,13 +472,22 @@ function JobApplications() {
 
                                 </div>
 
+
+                                {/* =================================
+                                    APPLICATION CONTENT
+                                ================================= */}
+
                                 <div className="application-content">
+
+
+                                    {/* Skills */}
 
                                     <div>
 
                                         <strong>
                                             Skills
                                         </strong>
+
 
                                         {application.student
                                             ?.skills?.length ? (
@@ -324,15 +499,13 @@ function JobApplications() {
                                                         skill,
                                                         index
                                                     ) => (
+
                                                         <span
-                                                            key={
-                                                                index
-                                                            }
+                                                            key={index}
                                                         >
-                                                            {
-                                                                skill
-                                                            }
+                                                            {skill}
                                                         </span>
+
                                                     )
                                                 )}
 
@@ -349,15 +522,20 @@ function JobApplications() {
 
                                     </div>
 
+
+                                    {/* Resume */}
+
                                     <div>
 
                                         <strong>
                                             Resume
                                         </strong>
 
+
                                         {application.resume ? (
 
                                             <p>
+
                                                 <a
                                                     href={
                                                         application.resume
@@ -367,6 +545,7 @@ function JobApplications() {
                                                 >
                                                     View Resume
                                                 </a>
+
                                             </p>
 
                                         ) : (
@@ -380,11 +559,15 @@ function JobApplications() {
 
                                     </div>
 
+
+                                    {/* Cover Letter */}
+
                                     <div>
 
                                         <strong>
                                             Cover Letter
                                         </strong>
+
 
                                         <p>
                                             {application.coverLetter ||
@@ -393,11 +576,15 @@ function JobApplications() {
 
                                     </div>
 
+
+                                    {/* Education */}
+
                                     <div>
 
                                         <strong>
                                             Education
                                         </strong>
+
 
                                         <p>
                                             {application.student
@@ -409,7 +596,15 @@ function JobApplications() {
 
                                 </div>
 
+
+                                {/* =================================
+                                    APPLICATION ACTIONS
+                                ================================= */}
+
                                 <div className="application-actions">
+
+
+                                    {/* Status dropdown */}
 
                                     <select
                                         value={
@@ -418,8 +613,7 @@ function JobApplications() {
                                         onChange={(event) =>
                                             handleStatusChange(
                                                 application._id,
-                                                event.target
-                                                    .value
+                                                event.target.value
                                             )
                                         }
                                     >
@@ -432,29 +626,60 @@ function JobApplications() {
                                             {application.status}
                                         </option>
 
+
                                         {allowedTransitions[
                                             application.status
                                         ]?.map(
                                             (status) => (
+
                                                 <option
-                                                    key={
-                                                        status
-                                                    }
-                                                    value={
-                                                        status
-                                                    }
+                                                    key={status}
+                                                    value={status}
                                                 >
                                                     {status}
                                                 </option>
+
                                             )
                                         )}
 
                                     </select>
 
+
+                                    {/* =================================
+                                        CHAT BUTTON
+                                    ================================= */}
+
+                                    {[
+                                        "Shortlisted",
+                                        "Interview",
+                                        "Selected"
+                                    ].includes(
+                                        application.status
+                                    ) && (
+
+                                        <button
+                                            type="button"
+                                            className="chat-open-button"
+                                            onClick={() =>
+                                                setActiveChat(
+                                                    application
+                                                )
+                                            }
+                                        >
+                                            💬 Chat with Student
+                                        </button>
+
+                                    )}
+
+
+                                    {/* =================================
+                                        INTERVIEW BUTTON
+                                    ================================= */}
+
                                     {(application.status ===
                                         "Shortlisted" ||
                                         application.status ===
-                                            "Interview") && (
+                                        "Interview") && (
 
                                         <button
                                             onClick={() =>
@@ -472,61 +697,92 @@ function JobApplications() {
 
                                 </div>
 
+
+                                {/* =================================
+                                    EXISTING INTERVIEW
+                                ================================= */}
+
                                 {application.interview?.date && (
+
                                     <div className="existing-interview">
 
                                         <h3>
                                             Interview Scheduled
                                         </h3>
 
+
                                         <div className="existing-interview-grid">
 
+
                                             <div>
+
                                                 <span>
                                                     Date
                                                 </span>
 
+
                                                 <strong>
+
                                                     {new Date(
                                                         application
                                                             .interview
                                                             .date
                                                     ).toLocaleDateString()}
+
                                                 </strong>
+
                                             </div>
 
+
                                             <div>
+
                                                 <span>
                                                     Time
                                                 </span>
 
+
                                                 <strong>
+
                                                     {
                                                         application
                                                             .interview
                                                             .time
                                                     }
+
                                                 </strong>
+
                                             </div>
 
+
                                             <div>
+
                                                 <span>
                                                     Type
                                                 </span>
 
+
                                                 <strong>
+
                                                     {
                                                         application
                                                             .interview
                                                             .type
                                                     }
+
                                                 </strong>
+
                                             </div>
 
                                         </div>
 
                                     </div>
+
                                 )}
+
+
+                                {/* =================================
+                                    INTERVIEW FORM
+                                ================================= */}
 
                                 {showInterviewForm ===
                                     application._id && (
@@ -542,16 +798,20 @@ function JobApplications() {
                                     >
 
                                         <h3>
+
                                             {application.interview
                                                 ? "Reschedule Interview"
                                                 : "Schedule Interview"}
+
                                         </h3>
+
 
                                         <div className="form-group">
 
                                             <label>
                                                 Date
                                             </label>
+
 
                                             <input
                                                 type="date"
@@ -567,9 +827,11 @@ function JobApplications() {
                                                     setInterviewData(
                                                         {
                                                             ...interviewData,
-                                                            date: event
-                                                                .target
-                                                                .value
+
+                                                            date:
+                                                                event
+                                                                    .target
+                                                                    .value
                                                         }
                                                     )
                                                 }
@@ -578,11 +840,13 @@ function JobApplications() {
 
                                         </div>
 
+
                                         <div className="form-group">
 
                                             <label>
                                                 Time
                                             </label>
+
 
                                             <input
                                                 type="time"
@@ -598,9 +862,11 @@ function JobApplications() {
                                                     setInterviewData(
                                                         {
                                                             ...interviewData,
-                                                            time: event
-                                                                .target
-                                                                .value
+
+                                                            time:
+                                                                event
+                                                                    .target
+                                                                    .value
                                                         }
                                                     )
                                                 }
@@ -609,11 +875,13 @@ function JobApplications() {
 
                                         </div>
 
+
                                         <div className="form-group">
 
                                             <label>
                                                 Interview Type
                                             </label>
+
 
                                             <select
                                                 value={
@@ -625,9 +893,11 @@ function JobApplications() {
                                                     setInterviewData(
                                                         {
                                                             ...interviewData,
-                                                            type: event
-                                                                .target
-                                                                .value
+
+                                                            type:
+                                                                event
+                                                                    .target
+                                                                    .value
                                                         }
                                                     )
                                                 }
@@ -645,11 +915,13 @@ function JobApplications() {
 
                                         </div>
 
+
                                         <div className="form-group">
 
                                             <label>
                                                 Meeting Link
                                             </label>
+
 
                                             <input
                                                 type="url"
@@ -662,6 +934,7 @@ function JobApplications() {
                                                     setInterviewData(
                                                         {
                                                             ...interviewData,
+
                                                             meetingLink:
                                                                 event
                                                                     .target
@@ -674,11 +947,13 @@ function JobApplications() {
 
                                         </div>
 
+
                                         <div className="form-group">
 
                                             <label>
                                                 Notes
                                             </label>
+
 
                                             <textarea
                                                 value={
@@ -690,9 +965,11 @@ function JobApplications() {
                                                     setInterviewData(
                                                         {
                                                             ...interviewData,
-                                                            notes: event
-                                                                .target
-                                                                .value
+
+                                                            notes:
+                                                                event
+                                                                    .target
+                                                                    .value
                                                         }
                                                     )
                                                 }
@@ -701,13 +978,17 @@ function JobApplications() {
 
                                         </div>
 
+
                                         <div className="interview-actions">
 
                                             <button type="submit">
+
                                                 {application.interview
                                                     ? "Update Interview"
                                                     : "Schedule Interview"}
+
                                             </button>
+
 
                                             <button
                                                 type="button"
@@ -736,8 +1017,28 @@ function JobApplications() {
 
             )}
 
+
+            {/* =========================================
+                CHAT WINDOW
+            ========================================= */}
+
+            {activeChat && user && (
+
+                <ChatWindow
+                    application={activeChat}
+                    user={user}
+                    onClose={() =>
+                        setActiveChat(null)
+                    }
+                />
+
+            )}
+
         </div>
+
     );
+
 }
+
 
 export default JobApplications;
